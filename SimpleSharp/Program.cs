@@ -2,15 +2,16 @@
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static void Main(string[] args) 
         {
-            string code = "10 + 20 ";
-            Lexer lexer = new Lexer(code);
+            string code = "10+20-5\n2/*";
+            string moreCode = "for21foreachfor\neachfor each";
+            Lexer lexer = new Lexer(moreCode);
 
             var result2 = lexer.Tokenize();
 
             ReadOnlyMemory<char> temp = new ReadOnlyMemory<char>(code.ToCharArray());
-            var result1 = temp.Slice(1);
+            var result1 = temp.Slice(0, 1);
         }
 
 
