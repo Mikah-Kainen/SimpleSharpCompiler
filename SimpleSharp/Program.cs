@@ -1,11 +1,14 @@
-﻿namespace SimpleSharp
+﻿using System.Text.RegularExpressions;
+
+namespace SimpleSharp
 {
     internal class Program
     {
         static void Main(string[] args) 
         {
+
             string code = "10+20-5\n2/*";
-            string moreCode = "for21foreachfor\neachfor each";
+            string moreCode = "for+foreach(for\neach)foreach a";
             Lexer lexer = new Lexer(moreCode);
 
             var result2 = lexer.Tokenize();

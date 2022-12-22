@@ -5,26 +5,27 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SimpleSharp
+namespace SimpleSharp.Tokens
 {
     public enum Classifications
     {
-        None,
+        WhiteSpace = 0,
         Keyword,
-        Type,
-        Identifier,
         Operator,
-        Number,
-        Separator,
+        LeftParenthesis,
+        RightParenthesis,
+        //Type,
+        //Number,
+        //Comment,
+        //Identifier,
+        Invalid,
     };
 
     [DebuggerDisplay("{Lexeme} : {Classification}")]
     public class Token
     {
-        //Forget about spans
         public ReadOnlyMemory<char> Lexeme;
         public Classifications Classification;
-
 
         public Token(ReadOnlyMemory<char> lexeme, Classifications classification)
         {

@@ -5,44 +5,46 @@ using System.Linq;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using SimpleSharp.Tokens;
 
 namespace SimpleSharp
 {
     public class Lexer
     {
         public ReadOnlyMemory<char> Memory;
-        private Dictionary<string, Func<ReadOnlyMemory<char>, Token>> tokenDictionary;
+        public string[] RegexStrings;
 
-        private Token GenerateOperatorToken(ReadOnlyMemory<char> lexeme) => new Token(lexeme, Classifications.Operator);
-        private Token GenerateKeywordToken(ReadOnlyMemory<char> lexeme) => new Token(lexeme, Classifications.Keyword);
-        private Token GenerateTypeToken(ReadOnlyMemory<char> lexeme) => new Token(lexeme, Classifications.Type);
+        //WhiteSpace,
+        //Keyword,
+        //Operator,
+        //LeftParenthesis,
+        //RightParenthesis,
+        //Type,
+        //Number,
+        //Comment,
+        //Identifier,
+        //Invalid,
+
+        //E -> E op E
+        //   | (E)
+        //   | id
 
         public Lexer(string code)
         {
             Memory = new ReadOnlyMemory<char>(code.ToCharArray());
-            tokenDictionary = new Dictionary<string, Func<ReadOnlyMemory<char>, Token>>();
-
-            #region Operators
-            tokenDictionary.Add("+", GenerateOperatorToken);
-            tokenDictionary.Add("-", GenerateOperatorToken);
-            tokenDictionary.Add("*", GenerateOperatorToken);
-            tokenDictionary.Add("/", GenerateOperatorToken);
-            #endregion
-            #region Keywords
-            tokenDictionary.Add("for", GenerateKeywordToken);
-            tokenDictionary.Add("each", GenerateKeywordToken);
-            tokenDictionary.Add("foreach", GenerateKeywordToken);
-            #endregion
-            #region Types
-            tokenDictionary.Add("int", GenerateTypeToken);
-            tokenDictionary.Add("char", GenerateTypeToken);
-            tokenDictionary.Add("string", GenerateTypeToken);
-            #endregion
-
-            //tokenDictionary.Add("", new Token(new ReadOnlyMemory<char>(new char[] { '' }), Classifications));
-            //tokenDictionary.Add("", new Token(new ReadOnlyMemory<char>(new char[] { '' }), Classifications));
-            //tokenDictionary.Add("", new Token(new ReadOnlyMemory<char>(new char[] { '' }), Classifications));
+            RegexStrings = new string[(int)Classifications.Invalid + 1];
+            RegexStrings[(int)Classifications.WhiteSpace] = @"([\n ])+";
+            RegexStrings[(int)Classifications.Keyword] = @"(for|each|foreach|if)\b";
+            RegexStrings[(int)Classifications.Operator] = @"([-+*\/])";
+            RegexStrings[(int)Classifications.LeftParenthesis] = @"([(])";
+            RegexStrings[(int)Classifications.RightParenthesis] = @"([)])";
+            //RegexStrings[(int)Classifications.Type] = @"";
+            //RegexStrings[(int)Classifications.Number] = @"";
+            //RegexStrings[(int)Classifications.Comment] = @"";
+            //RegexStrings[(int)Classifications.Identifier] = @"";
+            RegexStrings[(int)Classifications.Invalid] = @"(.+?)[\n ]";
 
         }
         #region TestForIsPossibleToken
@@ -61,47 +63,43 @@ namespace SimpleSharp
         //bool result6 = IsPossibleKey("seven");
         #endregion
 
+
+        //Keyword,
+        //Operator,
+        //LeftParenthesis,
+        //RightParenthesis,
+        //Type,
+        //Number,
+        //Comment,
+        //Identifier,
+        //Invalid,
+
         public Token[] Tokenize()
         {
             List<Token> tokens = new List<Token>();
-            int previousIndex = 0;
-            for (int currentIndex = 0; currentIndex < Memory.Length; currentIndex++)
+            string memory = Memory.ToString();
+            int currentIndex = 0;
+
+
+            while (currentIndex < Memory.Length)
             {
-                char newwestChar = Memory.Slice(currentIndex, 1).ToString()[0];
-                if (previousIndex != currentIndex && (newwestChar == ' ' || newwestChar == '\n' || currentIndex + 1 == Memory.Length || !IsPossibleToken(Memory.Slice(previousIndex, currentIndex - previousIndex).ToString())))
+                for (Classifications classification = 0; (int)classification <= (int)Classifications.Invalid; classification++)
                 {
-                    Token currentToken = GetToken(previousIndex, currentIndex - previousIndex);
-                    if (currentToken != null)
+                    Regex currentRegex = new Regex(RegexStrings[(int)classification]);
+                    Match result = currentRegex.Match(memory, currentIndex);
+
+                    if (result != Match.Empty && result.Index == currentIndex)
                     {
-                        tokens.Add(currentToken);
-                        previousIndex = currentIndex;
-                    }
-                    else
-                    {
-                        throw new Exception("Space Too Early"); //add in the concept of separators so I don't have to predict if something might be tokenizable
+                        tokens.Add(new Token(Memory.Slice(currentIndex, result.Groups[1].Value.Length), classification));
+                        currentIndex += result.Groups[1].Value.Length;
+                        break;
                     }
                 }
-
             }
 
             return tokens.ToArray();
         }
 
-        private Token GetToken(int currentIndex, int length)
-        {
-            ReadOnlyMemory<char> memory = Memory.Slice(currentIndex, length);
-            string input = memory.ToString();
-            if (input[0] >= 48 && input[0] <= 57)
-            {
-                return new Token(memory, Classifications.Number);
-            }
-            if (tokenDictionary.ContainsKey(input))
-            {
-                return tokenDictionary[input](memory);
-            }
-
-            return null;
-        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private char GetNextCharacter(int index)
@@ -109,48 +107,78 @@ namespace SimpleSharp
             return Memory.Slice(index, 1).ToString()[0];
         }
 
-        //private int GetNextValidCharacterIndex(int currentIndex)
+        //public Token[] Tokenize()
         //{
-        //    for (currentIndex++; currentIndex < Memory.Length && GetNextCharacter(currentIndex) == '\n'; currentIndex++)
+        //    List<Token> tokens = new List<Token>();
+        //    int previousIndex = 0;
+        //    for (int currentIndex = 0; currentIndex < Memory.Length; currentIndex++)
         //    {
+        //        char newwestChar = Memory.Slice(currentIndex, 1).ToString()[0];
+        //        if (previousIndex != currentIndex && (newwestChar == ' ' || newwestChar == '\n' || currentIndex + 1 == Memory.Length || !IsPossibleToken(Memory.Slice(previousIndex, currentIndex - previousIndex).ToString())))
+        //        {
+        //            Token currentToken = GetToken(previousIndex, currentIndex - previousIndex);
+        //            if (currentToken != null)
+        //            {
+        //                tokens.Add(currentToken);
+        //                previousIndex = currentIndex;
+        //            }
+        //            else
+        //            {
+        //                throw new Exception("Space Too Early"); //add in the concept of separators so I don't have to predict if something might be tokenizable
+        //            }
+        //        }
+
         //    }
 
-        //    if (currentIndex == Memory.Length)
-        //    {
-        //        return -1;
-        //    }
-        //    return currentIndex;
+        //    return tokens.ToArray();
         //}
 
-        private bool IsPossibleToken(string input)
-        {
-            if (input[0] >= 48 & input[0] <= 57 & input[input.Length - 1] >= 48 & input[input.Length - 1] <= 57)
-            {
-                return true;
-            }
-            if (tokenDictionary.ContainsKey(input))
-            {
-                return true;
-            }
-            foreach (var kvp in tokenDictionary)
-            {
-                string currentString = kvp.Key;
-                if (currentString.Length > input.Length)
-                {
-                    for (int i = 0; i < input.Length; i++)
-                    {
-                        if (currentString[i] != input[i])
-                        {
-                            break;
-                        }
-                        if (i == input.Length - 1)
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-            return false;
-        }
+        //private Token GetToken(int currentIndex, int length)
+        //{
+        //    ReadOnlyMemory<char> memory = Memory.Slice(currentIndex, length);
+        //    string input = memory.ToString();
+        //    if (input[0] >= 48 && input[0] <= 57)
+        //    {
+        //        return new Token(memory, Classifications.Number);
+        //    }
+        //    if (tokenDictionary.ContainsKey(input))
+        //    {
+        //        return tokenDictionary[input](memory);
+        //    }
+
+        //    return null;
+        //}
+
+
+        //private bool IsPossibleToken(string input)
+        //{
+        //    if (input[0] >= 48 & input[0] <= 57 & input[input.Length - 1] >= 48 & input[input.Length - 1] <= 57)
+        //    {
+        //        return true;
+        //    }
+        //    if (tokenDictionary.ContainsKey(input))
+        //    {
+        //        return true;
+        //    }
+        //    foreach (var kvp in tokenDictionary)
+        //    {
+        //        string currentString = kvp.Key;
+        //        if (currentString.Length > input.Length)
+        //        {
+        //            for (int i = 0; i < input.Length; i++)
+        //            {
+        //                if (currentString[i] != input[i])
+        //                {
+        //                    break;
+        //                }
+        //                if (i == input.Length - 1)
+        //                {
+        //                    return true;
+        //                }
+        //            }
+        //        }
+        //    }
+        //    return false;
+        //}
     }
 }
