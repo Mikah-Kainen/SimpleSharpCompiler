@@ -8,7 +8,7 @@ namespace SimpleSharp
         {
 
             string code = "10+20-5\n2/*";
-            string moreCode = "for+foreach(for\neach)foreach a";
+            string moreCode = "for+foreach(for\neach)foreach;";
             Lexer lexer = new Lexer(moreCode);
 
             var result2 = lexer.Tokenize();
