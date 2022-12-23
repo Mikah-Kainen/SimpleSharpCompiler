@@ -6,15 +6,10 @@ namespace SimpleSharp
     {
         static void Main(string[] args) 
         {
-
-            string code = "10+20-5\n2/*";
-            string moreCode = "for+foreach(for\neach)foreach;";
+            string moreCode = "/**/ for + /*foreach(foreach)foreach; */ for 123 - -32 int string invalid((( char each \n //I like to make Money\n char + 5";
             Lexer lexer = new Lexer(moreCode);
 
             var result2 = lexer.Tokenize();
-
-            ReadOnlyMemory<char> temp = new ReadOnlyMemory<char>(code.ToCharArray());
-            var result1 = temp.Slice(0, 1);
         }
 
 

@@ -13,6 +13,10 @@ namespace SimpleSharp
 {
     public class Lexer
     {
+        //Cool Websites:
+        //https://www.ibm.com/docs/en/developer-for-zos/14.1?topic=file-regular-expressions
+        //https://regex101.com/
+
         public ReadOnlyMemory<char> Memory;
         public string[] RegexStrings;
 
@@ -26,6 +30,7 @@ namespace SimpleSharp
         //Comment,
         //Identifier,
         //Invalid,
+        //EndOfCode,
 
         //E -> E op E
         //   | (E)
@@ -35,17 +40,18 @@ namespace SimpleSharp
         {
             Memory = new ReadOnlyMemory<char>(code.ToCharArray());
             RegexStrings = new string[(int)Classifications.Invalid + 1];
-            RegexStrings[(int)Classifications.WhiteSpace] = @"([\n ])+";
+            RegexStrings[(int)Classifications.WhiteSpace] = @"(\s)+";
+            RegexStrings[(int)Classifications.BlockComment] = @"(\/\/.*?)\n";
+            RegexStrings[(int)Classifications.PreciseComment] = @"(\/\*.*?\*\/)"; //This regex does not work. I need a way to capture all charcters including the breaking characters
             RegexStrings[(int)Classifications.Keyword] = @"(for|each|foreach|if)\b";
             RegexStrings[(int)Classifications.Operator] = @"([-+*\/])";
-            RegexStrings[(int)Classifications.LeftParenthesis] = @"([(])";
+            RegexStrings[(int)Classifications.LeftParenthesis] =  @"([(])"; 
             RegexStrings[(int)Classifications.RightParenthesis] = @"([)])";
-            //RegexStrings[(int)Classifications.Type] = @"";
-            //RegexStrings[(int)Classifications.Number] = @"";
-            //RegexStrings[(int)Classifications.Comment] = @"";
-            //RegexStrings[(int)Classifications.Identifier] = @"";
-            RegexStrings[(int)Classifications.Invalid] = @"(.+?)[\n ]";
-
+            RegexStrings[(int)Classifications.Semicolon] = @"(;)";
+            RegexStrings[(int)Classifications.Type] = @"(int|string|char)\b";
+            RegexStrings[(int)Classifications.Number] = @"(-??\d+)";
+            RegexStrings[(int)Classifications.Identifier] = @"(\w+)\b";
+            RegexStrings[(int)Classifications.Invalid] = @"(.+?)\b";
         }
         #region TestForIsPossibleToken
         //tokenDictionary.Add("Bob", new Token(new ReadOnlyMemory<char>(new char[] { '/' }), Classifications.Operator));
@@ -63,23 +69,11 @@ namespace SimpleSharp
         //bool result6 = IsPossibleKey("seven");
         #endregion
 
-
-        //Keyword,
-        //Operator,
-        //LeftParenthesis,
-        //RightParenthesis,
-        //Type,
-        //Number,
-        //Comment,
-        //Identifier,
-        //Invalid,
-
         public Token[] Tokenize()
         {
             List<Token> tokens = new List<Token>();
             string memory = Memory.ToString();
             int currentIndex = 0;
-
 
             while (currentIndex < Memory.Length)
             {

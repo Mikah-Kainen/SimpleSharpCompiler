@@ -10,14 +10,16 @@ namespace SimpleSharp.Tokens
     public enum Classifications
     {
         WhiteSpace = 0,
+        BlockComment,
+        PreciseComment,
         Keyword,
         Operator,
         LeftParenthesis,
         RightParenthesis,
-        //Type,
-        //Number,
-        //Comment,
-        //Identifier,
+        Semicolon,
+        Type,
+        Number,
+        Identifier,
         Invalid,
     };
 
