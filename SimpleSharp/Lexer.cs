@@ -7,7 +7,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using SimpleSharp.Tokens;
 
 namespace SimpleSharp
 {
@@ -20,34 +19,20 @@ namespace SimpleSharp
         public ReadOnlyMemory<char> Memory;
         public string[] RegexStrings;
 
-        //WhiteSpace,
-        //Keyword,
-        //Operator,
-        //LeftParenthesis,
-        //RightParenthesis,
-        //Type,
-        //Number,
-        //Comment,
-        //Identifier,
-        //Invalid,
-        //EndOfCode,
-
-        //E -> E op E
-        //   | (E)
-        //   | id
-
         public Lexer(string code)
         {
             Memory = new ReadOnlyMemory<char>(code.ToCharArray());
             RegexStrings = new string[(int)Classifications.Invalid + 1];
-            RegexStrings[(int)Classifications.WhiteSpace] = @"(\s)+";
+            RegexStrings[(int)Classifications.WhiteSpace] = @"(\s+)";
             RegexStrings[(int)Classifications.BlockComment] = @"(\/\/.*?)\n";
             RegexStrings[(int)Classifications.PreciseComment] = @"(\/\*.*?\*\/)\s"; //This regex does not work. I need a way to capture all charcters including the breaking characters
             RegexStrings[(int)Classifications.Keyword] = @"(for|each|foreach|if)\b";
-            RegexStrings[(int)Classifications.Operator] = @"([-+*\/])";
+            RegexStrings[(int)Classifications.AddSub] = @"([-+])";
+            RegexStrings[(int)Classifications.MultDiv] = @"([*\/])";
+            RegexStrings[(int)Classifications.ExpLog] = @"((\^|\blog\b))";
             RegexStrings[(int)Classifications.LeftParenthesis] =  @"([(])"; 
             RegexStrings[(int)Classifications.RightParenthesis] = @"([)])";
-            RegexStrings[(int)Classifications.Semicolon] = @"(;)";
+            RegexStrings[(int)Classifications.CodeSeparator] = @"(;)";
             RegexStrings[(int)Classifications.Type] = @"(int|string|char)\b";
             RegexStrings[(int)Classifications.Number] = @"(-??\d+)";
             RegexStrings[(int)Classifications.Identifier] = @"(\w+)\b";

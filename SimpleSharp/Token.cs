@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SimpleSharp.Tokens
+namespace SimpleSharp
 {
     public enum Classifications
     {
@@ -13,10 +13,12 @@ namespace SimpleSharp.Tokens
         BlockComment,
         PreciseComment,
         Keyword,
-        Operator,
+        AddSub,
+        MultDiv,
+        ExpLog,
         LeftParenthesis,
         RightParenthesis,
-        Semicolon,
+        CodeSeparator,
         Type,
         Number,
         Identifier,

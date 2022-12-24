@@ -6,7 +6,7 @@ namespace SimpleSharp
     {
         static void Main(string[] args) 
         {
-            string moreCode = "/**/ for + /*foreach(foreach)foreach; */ for 123 - -32 int string invalid((( char each \n //I like to make Money\n char + 5";
+            string moreCode = "/**/ for logg+er log3 log(3)/ *+^  + /*foreach(foreach)foreach; */ for 123 - -32 int string invalid((( char each \n //I like to make Money\n char + 5";
             Lexer lexer = new Lexer(moreCode);
 
             var result2 = lexer.Tokenize();
