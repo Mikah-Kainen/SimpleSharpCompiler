@@ -42,7 +42,7 @@ namespace SimpleSharp
             RegexStrings = new string[(int)Classifications.Invalid + 1];
             RegexStrings[(int)Classifications.WhiteSpace] = @"(\s)+";
             RegexStrings[(int)Classifications.BlockComment] = @"(\/\/.*?)\n";
-            RegexStrings[(int)Classifications.PreciseComment] = @"(\/\*.*?\*\/)"; //This regex does not work. I need a way to capture all charcters including the breaking characters
+            RegexStrings[(int)Classifications.PreciseComment] = @"(\/\*.*?\*\/)\s"; //This regex does not work. I need a way to capture all charcters including the breaking characters
             RegexStrings[(int)Classifications.Keyword] = @"(for|each|foreach|if)\b";
             RegexStrings[(int)Classifications.Operator] = @"([-+*\/])";
             RegexStrings[(int)Classifications.LeftParenthesis] =  @"([(])"; 
