@@ -19,6 +19,7 @@ namespace SimpleSharp
         LeftParenthesis,
         RightParenthesis,
         CodeSeparator,
+        Declare,
         Type,
         Number,
         Identifier,

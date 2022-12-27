@@ -6,10 +6,15 @@ namespace SimpleSharp
     {
         static void Main(string[] args) 
         {
-            string moreCode = "/**/ for logg+er log3 log(3)/ *+^  + /*foreach(foreach)foreach; */ for 123 - -32 int string invalid((( char each \n //I like to make Money\n char + 5";
-            Lexer lexer = new Lexer(moreCode);
+            string moreCode = "/**/ declare intdeclare declareind for logg+er log3 log(3)/ *+^  + /*foreach(foreach)foreach; */ for 123 - -32 int string invalid((( char each \n //I like to make Money;;\n char + 5";
+            
+            string coolCode = "1 / 1 log 1 - 1 * 1;";
 
-            var result2 = lexer.Tokenize();
+            Lexer lexer = new Lexer(coolCode);
+            var tokenList = lexer.Tokenize();
+
+            Parser parser = new Parser(tokenList);
+            var parsedStuff = parser.Parse();
         }
 
 

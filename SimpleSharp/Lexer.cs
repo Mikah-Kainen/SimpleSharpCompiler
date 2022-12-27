@@ -10,33 +10,38 @@ using System.Threading.Tasks;
 
 namespace SimpleSharp
 {
+
     public class Lexer
     {
+        public static string[] RegexStrings =
+        {
+            /*[(int)Classifications.WhiteSpace] =       */@"(\s+)",
+            /*[(int)Classifications.BlockComment] =     */@"(\/\/.*?)\n",
+            /*[(int)Classifications.PreciseComment] =   */@"(\/\*.*?\*\/)\s", //This regex does not work. I need a way to capture all charcters including the breaking characters
+            /*[(int)Classifications.Keyword] =          */@"(for|each|foreach|if)\b",
+            /*[(int)Classifications.AddSub] =           */@"([-+])",
+            /*[(int)Classifications.MultDiv] =          */@"([*\/])",
+            /*[(int)Classifications.ExpLog] =           */@"((\^|\blog\b))",
+            /*[(int)Classifications.LeftParenthesis] =  */@"([(])",
+            /*[(int)Classifications.RightParenthesis] = */@"([)])",
+            /*[(int)Classifications.CodeSeparator] =    */@"(;)",
+            /*[(int)Classifications.Declare] =          */@"\b(declare)",
+            /*[(int)Classifications.Type] =             */@"(int|string|char)\b",
+            /*[(int)Classifications.Number] =           */@"(-??\d+)",
+            /*[(int)Classifications.Identifier] =       */@"(\w+)\b",
+            /*[(int)Classifications.Invalid] =          */@"(.+?)\b",
+        };
+
         //Cool Websites:
         //https://www.ibm.com/docs/en/developer-for-zos/14.1?topic=file-regular-expressions
         //https://regex101.com/
 
         public ReadOnlyMemory<char> Memory;
-        public string[] RegexStrings;
 
         public Lexer(string code)
         {
             Memory = new ReadOnlyMemory<char>(code.ToCharArray());
-            RegexStrings = new string[(int)Classifications.Invalid + 1];
-            RegexStrings[(int)Classifications.WhiteSpace] = @"(\s+)";
-            RegexStrings[(int)Classifications.BlockComment] = @"(\/\/.*?)\n";
-            RegexStrings[(int)Classifications.PreciseComment] = @"(\/\*.*?\*\/)\s"; //This regex does not work. I need a way to capture all charcters including the breaking characters
-            RegexStrings[(int)Classifications.Keyword] = @"(for|each|foreach|if)\b";
-            RegexStrings[(int)Classifications.AddSub] = @"([-+])";
-            RegexStrings[(int)Classifications.MultDiv] = @"([*\/])";
-            RegexStrings[(int)Classifications.ExpLog] = @"((\^|\blog\b))";
-            RegexStrings[(int)Classifications.LeftParenthesis] =  @"([(])"; 
-            RegexStrings[(int)Classifications.RightParenthesis] = @"([)])";
-            RegexStrings[(int)Classifications.CodeSeparator] = @"(;)";
-            RegexStrings[(int)Classifications.Type] = @"(int|string|char)\b";
-            RegexStrings[(int)Classifications.Number] = @"(-??\d+)";
-            RegexStrings[(int)Classifications.Identifier] = @"(\w+)\b";
-            RegexStrings[(int)Classifications.Invalid] = @"(.+?)\b";
+
         }
         #region TestForIsPossibleToken
         //tokenDictionary.Add("Bob", new Token(new ReadOnlyMemory<char>(new char[] { '/' }), Classifications.Operator));
