@@ -18,7 +18,7 @@ namespace SimpleSharp
         MathAddSub,  //MathAddSub  -> MathMultDiv    + MathAddSub  | MathMultDiv           -  MathAddSub  | MathMultDiv
         MathMultDiv, //MathMultDiv -> MathExpLog     * MathMultDiv | MathExpLog            /  MathMultDiv | MathExpLog
         MathExpLog,  //MathExpLog  -> MathExpression ^ MathExpLog  | MathExpression[base] log MathExpLog  | MathExpression
-        MathExpression, //MathExpression -> (MathAddSub) | Identifier[Token] | Number[Token] | AddSub[Token] Number[Token]
+        MathExpression, //MathExpression -> (MathAddSub) | Identifier[Token] | AddSub[Token] Identifier[Token] | Number[Token] | AddSub[Token] Number[Token]
     }
 
     [DebuggerDisplay("{DebugDisplay}")]
@@ -29,30 +29,41 @@ namespace SimpleSharp
         public Token Token;
         public bool IsTerminal;
         public ParserNode[] Children;
+        public bool ForAST
+        {
+            get
+            {
+                switch (Classification)
+                {
+                    case Classifications.WhiteSpace:
+                        return false;
+
+                    case Classifications.LeftParenthesis:
+                        return false;
+
+                    case Classifications.RightParenthesis:
+                        return false;
+
+                    default:
+                        return true;
+                }
+            }
+        }
 
         public string DebugDisplay
         {
             get
             {
-                string returnString = "";
-                for (int i = 0; i < Children.Length; i++)
+                string display;
+                if (Token != null)
                 {
-                    string toAdd;
-                    if (Children[i].State != NonTerminalStates.Nothing)
-                    {
-                        toAdd = "State: " + Children[i].State.ToString() + "   ";
-                    }
-                    else/* if (Children[i].Token != null)*/
-                    {
-                        toAdd = "Lexeme: " + Children[i].Token.Lexeme.ToString() + "   ";
-                    }
-                    //else
-                    //{
-                    //    toAdd = "Classification: " + Children[i].Classification.ToString() + "   ";
-                    //}
-                    returnString += $"Node{i} " + toAdd;
+                    display = Token.Lexeme.ToString();
                 }
-                return returnString;
+                else
+                {
+                    display = State.ToString();
+                }
+                return display;
             }
         }
 
@@ -79,7 +90,7 @@ namespace SimpleSharp
         //MathAddSub  -> MathMultDiv    + MathAddSub  | MathMultDiv           -  MathAddSub  | MathMultDiv
         //MathMultDiv -> MathExpLog     * MathMultDiv | MathExpLog            /  MathMultDiv | MathExpLog
         //MathExpLog  -> MathExpression ^ MathExpLog  | MathExpression[base] log MathExpLog  | MathExpression
-        //MathExpression -> (MathAddSub) | Identifier[Token] | Number[Token] | AddSub[Token] Number[Token]
+        //MathExpression -> (MathAddSub) | Identifier[Token] | AddSub[Token] Identifier[Token] | Number[Token] | AddSub[Token] Number[Token]
 
         public Parser(Token[] tokens)
         {
@@ -103,10 +114,11 @@ namespace SimpleSharp
             MakeChildrenFunctions.Add(NonTerminalStates.MathExpLog, mathExpLog);
 
             List<Func<ParserNode[]>> mathExpression = new List<Func<ParserNode[]>>();
-            //mathExpression.Add(() => new ParserNode[] { new ParserNode(Classifications.LeftParenthesis), new ParserNode(NonTerminalStates.MathAddSub), new ParserNode(Classifications.RightParenthesis) });
+            mathExpression.Add(() => new ParserNode[] { new ParserNode(Classifications.LeftParenthesis), new ParserNode(NonTerminalStates.MathAddSub), new ParserNode(Classifications.RightParenthesis) });
             mathExpression.Add(() => new ParserNode[] { new ParserNode(Classifications.Identifier) });
+            mathExpression.Add(() => new ParserNode[] { new ParserNode(Classifications.AddSub), new ParserNode(Classifications.Identifier) });
             mathExpression.Add(() => new ParserNode[] { new ParserNode(Classifications.Number) });
-            //mathExpression.Add(() => new ParserNode[] { new ParserNode(Classifications.AddSub), new ParserNode(Classifications.Number) });
+            mathExpression.Add(() => new ParserNode[] { new ParserNode(Classifications.AddSub), new ParserNode(Classifications.Number) });
             MakeChildrenFunctions.Add(NonTerminalStates.MathExpression, mathExpression);
         }
 
@@ -149,30 +161,35 @@ namespace SimpleSharp
         {
             if (targetEquation.Count == 0)
             {
-                if(isEnd)
+                if (isEnd)
                 {
                     return targetEquation;
                 }
+                throw new Exception("Improper Parse");
                 return null;
             }
 
-            if(current.IsTerminal)
+            if (current.IsTerminal)
             {
                 if (current.Classification == targetEquation[0].Classification)
                 {
                     current.Token = targetEquation[0];
                     targetEquation.RemoveAt(0);
+                    if (!isEnd & targetEquation.Count == 0)
+                    {
+                        return null;
+                    }
                     return targetEquation;
                 }
                 return null;
             }
 
             var childrenFunctions = MakeChildrenFunctions[current.State];
-            foreach(var func in childrenFunctions)
+            foreach (var func in childrenFunctions)
             {
                 current.Children = func();
                 List<Token> copyEquation = new List<Token>(targetEquation);
-                for(int i = 0; i < current.Children.Length; i ++)
+                for (int i = 0; i < current.Children.Length; i++)
                 {
                     bool isTheEnd = i == current.Children.Length - 1;
                     copyEquation = ParseMathEquation(copyEquation, current.Children[i], isTheEnd & isEnd);
@@ -181,10 +198,18 @@ namespace SimpleSharp
                         break;
                     }
                 }
-                if(copyEquation != null)
+                if (copyEquation != null)
                 {
+                    if (isEnd & targetEquation.Count != 0)
+                    {
+                        return null;
+                    }
                     return copyEquation;
                 }
+            }
+            if(isEnd & targetEquation.Count != 0)
+            {
+                throw new Exception("FAIL");
             }
             return null;
         }

@@ -8,15 +8,50 @@ namespace SimpleSharp
         {
             string moreCode = "/**/ declare intdeclare declareind for logg+er log3 log(3)/ *+^  + /*foreach(foreach)foreach; */ for 123 - -32 int string invalid((( char each \n //I like to make Money;;\n char + 5";
             
-            string coolCode = "1 / 1 log 1 - 1 * 1;";
+            string coolCode = "1 / - 1 log 1 - 1 * 1;";
 
-            Lexer lexer = new Lexer(coolCode);
+            string knownExample = "1 / 1 + 1 ^ 1 * 1 - 1;";
+
+            string errorCode = "1 - 1;";
+
+            Lexer lexer = new Lexer(errorCode);
             var tokenList = lexer.Tokenize();
 
             Parser parser = new Parser(tokenList);
             var parsedStuff = parser.Parse();
+
+            DisplayTree(parsedStuff, "C");
+            Console.WriteLine();
+
+            AbstractSyntaxTree AST = new AbstractSyntaxTree(parsedStuff);
+            var abstractSyntaxTree = AST.BuildAST();
+
+            DisplayTree(abstractSyntaxTree, "A");
+            
         }
 
+        static void DisplayTree(ParserNode tree, string spaces)
+        {
+            string display;
+            if(tree.Token != null)
+            {
+                display = tree.Token.Lexeme.ToString();
+            }
+            else
+            {
+                display = tree.State.ToString();
+            }
+
+            Console.WriteLine(spaces + display);
+            if(tree.Children == null)
+            {
+                return;
+            }
+            foreach (ParserNode child in tree.Children)
+            {
+                DisplayTree(child, spaces + "| ");
+            }
+        }
 
         //CongaLine
 
