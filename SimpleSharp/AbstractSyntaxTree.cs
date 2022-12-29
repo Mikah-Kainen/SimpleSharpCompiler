@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Headers;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -20,7 +21,8 @@ namespace SimpleSharp
 
         public ParserNode BuildAST()
         {
-            ParserNode AbstractSyntaxTree = new ParserNode(NonTerminalStates.Head);
+            //ParserNode AbstractSyntaxTree = new ParserNode(NonTerminalStates.Head);
+            ParserNode AbstractSyntaxTree = new ParserNode(ParserNode.RootName);
             if (ConcreteSyntaxTree.Children == null)
             {
                 return AbstractSyntaxTree;
@@ -123,7 +125,8 @@ namespace SimpleSharp
             }
             else
             {
-                ParserNode returnNode = new ParserNode(NonTerminalStates.Head);
+                //ParserNode returnNode = new ParserNode(NonTerminalStates.Head);
+                ParserNode returnNode = new ParserNode(ParserNode.RootName);
                 returnNode.Children = currentNodeChildren.ToArray();
                 return returnNode;
             }

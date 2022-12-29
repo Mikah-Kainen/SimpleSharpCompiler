@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.Dynamic;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -11,20 +12,23 @@ using System.Threading.Tasks;
 
 namespace SimpleSharp
 {
-    public enum NonTerminalStates
-    {
-        Nothing,
-        Head,
-        MathAddSub,  //MathAddSub  -> MathMultDiv    + MathAddSub  | MathMultDiv           -  MathAddSub  | MathMultDiv
-        MathMultDiv, //MathMultDiv -> MathExpLog     * MathMultDiv | MathExpLog            /  MathMultDiv | MathExpLog
-        MathExpLog,  //MathExpLog  -> MathExpression ^ MathExpLog  | MathExpression[base] log MathExpLog  | MathExpression
-        MathExpression, //MathExpression -> (MathAddSub) | Identifier[Token] | AddSub[Token] Identifier[Token] | Number[Token] | AddSub[Token] Number[Token]
-    }
+    //public enum NonTerminalStates
+    //{
+    //    Nothing,
+    //    Head,
+    //    MathAddSub,  //MathAddSub  -> MathMultDiv    + MathAddSub  | MathMultDiv           -  MathAddSub  | MathMultDiv
+    //    MathMultDiv, //MathMultDiv -> MathExpLog     * MathMultDiv | MathExpLog            /  MathMultDiv | MathExpLog
+    //    MathExpLog,  //MathExpLog  -> MathExpression ^ MathExpLog  | MathExpression[base] log MathExpLog  | MathExpression
+    //    MathExpression, //MathExpression -> (MathAddSub) | Identifier[Token] | AddSub[Token] Identifier[Token] | Number[Token] | AddSub[Token] Number[Token]
+    //}
 
     [DebuggerDisplay("{DebugDisplay}")]
     public class ParserNode
     {
-        public NonTerminalStates State;
+        public const string RootName = "Head";
+
+        //public NonTerminalStates State;
+        public string State;
         public Classifications Classification;
         public Token Token;
         public bool IsTerminal;
@@ -42,6 +46,12 @@ namespace SimpleSharp
                         return false;
 
                     case Classifications.RightParenthesis:
+                        return false;
+
+                    case Classifications.BlockComment:
+                        return false;
+
+                    case Classifications.PreciseComment:
                         return false;
 
                     default:
@@ -67,7 +77,12 @@ namespace SimpleSharp
             }
         }
 
-        public ParserNode(NonTerminalStates state)
+        //public ParserNode(NonTerminalStates state)
+        //{
+        //    State = state;
+        //    IsTerminal = false;
+        //}
+        public ParserNode(string state)
         {
             State = state;
             IsTerminal = false;
@@ -85,7 +100,9 @@ namespace SimpleSharp
     {
         public Token[] Tokens;
         public ParserNode Head;
-        public Dictionary<NonTerminalStates, List<Func<ParserNode[]>>> MakeChildrenFunctions;
+        public ParserGenerator ParserGenerator;
+        //public Dictionary<NonTerminalStates, List<Func<ParserNode[]>>> MakeChildrenFunctions;
+        public Dictionary<string, List<Func<ParserNode[]>>> MakeChildrenFunctions => ParserGenerator.MakeChildrenFunctions;
 
         //MathAddSub  -> MathMultDiv    + MathAddSub  | MathMultDiv           -  MathAddSub  | MathMultDiv
         //MathMultDiv -> MathExpLog     * MathMultDiv | MathExpLog            /  MathMultDiv | MathExpLog
@@ -95,31 +112,38 @@ namespace SimpleSharp
         public Parser(Token[] tokens)
         {
             Tokens = tokens;
-            Head = new ParserNode(NonTerminalStates.Head);
-            MakeChildrenFunctions = new Dictionary<NonTerminalStates, List<Func<ParserNode[]>>>();
+            Head = new ParserNode(ParserNode.RootName);
+            ParserGenerator = new ParserGenerator();
 
-            List<Func<ParserNode[]>> mathAddSub = new List<Func<ParserNode[]>>();
-            mathAddSub.Add(() => new ParserNode[] { new ParserNode(NonTerminalStates.MathMultDiv), new ParserNode(Classifications.AddSub), new ParserNode(NonTerminalStates.MathAddSub) });
-            mathAddSub.Add(() => new ParserNode[] { new ParserNode(NonTerminalStates.MathMultDiv) });
-            MakeChildrenFunctions.Add(NonTerminalStates.MathAddSub, mathAddSub);
+            ParserGenerator.AddRule(" MathAddSub  ->MathMultDiv     + MathAddSub  | MathMultDiv           - MathAddSub   | MathMultDiv;");
+            ParserGenerator.AddRule("MathMultDiv -> MathExpLog     * MathMultDiv | MathExpLog            /  MathMultDiv | MathExpLog;");
+            ParserGenerator.AddRule("MathExpLog  -> MathExpression ^ MathExpLog  | MathExpression[base] log MathExpLog  | MathExpression;");
+            ParserGenerator.AddRule("MathExpression -> (MathAddSub) | Identifier | AddSub Identifier | Number | AddSub Number;");
+            //Head = new ParserNode(NonTerminalStates.Head);
+            //MakeChildrenFunctions = new Dictionary<NonTerminalStates, List<Func<ParserNode[]>>>();
 
-            List<Func<ParserNode[]>> mathMultDiv = new List<Func<ParserNode[]>>();
-            mathMultDiv.Add(() => new ParserNode[] { new ParserNode(NonTerminalStates.MathExpLog), new ParserNode(Classifications.MultDiv), new ParserNode(NonTerminalStates.MathMultDiv) });
-            mathMultDiv.Add(() => new ParserNode[] { new ParserNode(NonTerminalStates.MathExpLog) });
-            MakeChildrenFunctions.Add(NonTerminalStates.MathMultDiv, mathMultDiv);
+            //List<Func<ParserNode[]>> mathAddSub = new List<Func<ParserNode[]>>();
+            //mathAddSub.Add(() => new ParserNode[] { new ParserNode(NonTerminalStates.MathMultDiv), new ParserNode(Classifications.AddSub), new ParserNode(NonTerminalStates.MathAddSub) });
+            //mathAddSub.Add(() => new ParserNode[] { new ParserNode(NonTerminalStates.MathMultDiv) });
+            //MakeChildrenFunctions.Add(NonTerminalStates.MathAddSub, mathAddSub);
 
-            List<Func<ParserNode[]>> mathExpLog = new List<Func<ParserNode[]>>();
-            mathExpLog.Add(() => new ParserNode[] { new ParserNode(NonTerminalStates.MathExpression), new ParserNode(Classifications.ExpLog), new ParserNode(NonTerminalStates.MathExpLog) });
-            mathExpLog.Add(() => new ParserNode[] { new ParserNode(NonTerminalStates.MathExpression) });
-            MakeChildrenFunctions.Add(NonTerminalStates.MathExpLog, mathExpLog);
+            //List<Func<ParserNode[]>> mathMultDiv = new List<Func<ParserNode[]>>();
+            //mathMultDiv.Add(() => new ParserNode[] { new ParserNode(NonTerminalStates.MathExpLog), new ParserNode(Classifications.MultDiv), new ParserNode(NonTerminalStates.MathMultDiv) });
+            //mathMultDiv.Add(() => new ParserNode[] { new ParserNode(NonTerminalStates.MathExpLog) });
+            //MakeChildrenFunctions.Add(NonTerminalStates.MathMultDiv, mathMultDiv);
 
-            List<Func<ParserNode[]>> mathExpression = new List<Func<ParserNode[]>>();
-            mathExpression.Add(() => new ParserNode[] { new ParserNode(Classifications.LeftParenthesis), new ParserNode(NonTerminalStates.MathAddSub), new ParserNode(Classifications.RightParenthesis) });
-            mathExpression.Add(() => new ParserNode[] { new ParserNode(Classifications.Identifier) });
-            mathExpression.Add(() => new ParserNode[] { new ParserNode(Classifications.AddSub), new ParserNode(Classifications.Identifier) });
-            mathExpression.Add(() => new ParserNode[] { new ParserNode(Classifications.Number) });
-            mathExpression.Add(() => new ParserNode[] { new ParserNode(Classifications.AddSub), new ParserNode(Classifications.Number) });
-            MakeChildrenFunctions.Add(NonTerminalStates.MathExpression, mathExpression);
+            //List<Func<ParserNode[]>> mathExpLog = new List<Func<ParserNode[]>>();
+            //mathExpLog.Add(() => new ParserNode[] { new ParserNode(NonTerminalStates.MathExpression), new ParserNode(Classifications.ExpLog), new ParserNode(NonTerminalStates.MathExpLog) });
+            //mathExpLog.Add(() => new ParserNode[] { new ParserNode(NonTerminalStates.MathExpression) });
+            //MakeChildrenFunctions.Add(NonTerminalStates.MathExpLog, mathExpLog);
+
+            //List<Func<ParserNode[]>> mathExpression = new List<Func<ParserNode[]>>();
+            //mathExpression.Add(() => new ParserNode[] { new ParserNode(Classifications.LeftParenthesis), new ParserNode(NonTerminalStates.MathAddSub), new ParserNode(Classifications.RightParenthesis) });
+            //mathExpression.Add(() => new ParserNode[] { new ParserNode(Classifications.Identifier) });
+            //mathExpression.Add(() => new ParserNode[] { new ParserNode(Classifications.AddSub), new ParserNode(Classifications.Identifier) });
+            //mathExpression.Add(() => new ParserNode[] { new ParserNode(Classifications.Number) });
+            //mathExpression.Add(() => new ParserNode[] { new ParserNode(Classifications.AddSub), new ParserNode(Classifications.Number) });
+            //MakeChildrenFunctions.Add(NonTerminalStates.MathExpression, mathExpression);
         }
 
         public ParserNode Parse()
@@ -135,7 +159,7 @@ namespace SimpleSharp
                 }
                 else
                 {
-                    if (Tokens[i].Classification != Classifications.WhiteSpace)
+                    if (!Token.IsIgnorable(Tokens[i].Classification))
                     {
                         currentLine.Add(Tokens[i]);
                     }
@@ -147,11 +171,15 @@ namespace SimpleSharp
 
         private ParserNode ParseLine(List<Token> targetLine)
         {
-            Head.Children = new ParserNode[1] { new ParserNode(NonTerminalStates.MathAddSub) };
+            Head.Children = new ParserNode[1] { new ParserNode("MathAddSub") };
             List<Token> result = ParseMathEquation(targetLine, Head.Children[0], true);
             if (result != null)
             {
                 return Head;
+            }
+            else
+            {
+                throw new Exception("Failed Parse");
             }
 
             return null;
@@ -200,16 +228,12 @@ namespace SimpleSharp
                 }
                 if (copyEquation != null)
                 {
-                    if (isEnd & targetEquation.Count != 0)
+                    if (isEnd & copyEquation.Count != 0)
                     {
-                        return null;
+                        throw new Exception("FAIL");
                     }
                     return copyEquation;
                 }
-            }
-            if(isEnd & targetEquation.Count != 0)
-            {
-                throw new Exception("FAIL");
             }
             return null;
         }

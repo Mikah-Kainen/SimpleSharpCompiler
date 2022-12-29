@@ -1,20 +1,21 @@
-﻿using System.Text.RegularExpressions;
+﻿using System;
+using System.Text.RegularExpressions;
 
 namespace SimpleSharp
 {
     internal class Program
     {
-        static void Main(string[] args) 
+        static void Main(string[] args)
         {
             string moreCode = "/**/ declare intdeclare declareind for logg+er log3 log(3)/ *+^  + /*foreach(foreach)foreach; */ for 123 - -32 int string invalid((( char each \n //I like to make Money;;\n char + 5";
-            
-            string coolCode = "1 / - 1 log 1 - 1 * 1;";
+
+            string coolCode = "1 / - 1 log 1 - 1 * + 1 /*hi*/;";
 
             string knownExample = "1 / 1 + 1 ^ 1 * 1 - 1;";
 
             string errorCode = "1 - 1;";
 
-            Lexer lexer = new Lexer(errorCode);
+            Lexer lexer = new Lexer(knownExample);
             var tokenList = lexer.Tokenize();
 
             Parser parser = new Parser(tokenList);
@@ -27,13 +28,13 @@ namespace SimpleSharp
             var abstractSyntaxTree = AST.BuildAST();
 
             DisplayTree(abstractSyntaxTree, "A");
-            
+
         }
 
         static void DisplayTree(ParserNode tree, string spaces)
         {
             string display;
-            if(tree.Token != null)
+            if (tree.Token != null)
             {
                 display = tree.Token.Lexeme.ToString();
             }
@@ -43,7 +44,7 @@ namespace SimpleSharp
             }
 
             Console.WriteLine(spaces + display);
-            if(tree.Children == null)
+            if (tree.Children == null)
             {
                 return;
             }
