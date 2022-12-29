@@ -28,11 +28,12 @@ namespace SimpleSharp
         public const string RootName = "Head";
 
         //public NonTerminalStates State;
-        public string State;
+        //public string State;
         public Classifications Classification;
         public Token Token;
-        public bool IsTerminal;
         public ParserNode[] Children;
+        public bool IsTerminal;
+        public bool IsSpecific;
         public bool ForAST
         {
             get
@@ -65,6 +66,10 @@ namespace SimpleSharp
             get
             {
                 string display;
+                if(IsSpecific)
+                {
+
+                }
                 if (Token != null)
                 {
                     display = Token.Lexeme.ToString();
@@ -82,16 +87,38 @@ namespace SimpleSharp
         //    State = state;
         //    IsTerminal = false;
         //}
-        public ParserNode(string state)
-        {
-            State = state;
-            IsTerminal = false;
-        }
+        //public ParserNode(string state)
+        //{
+        //    State = state;
+        //    IsTerminal = false;
+        //    IsSpecific = true;
+        //}
 
         public ParserNode(Classifications classification)
         {
             Classification = classification;
             IsTerminal = true;
+            switch(classification)
+            {
+                case Classifications.Head:
+                    IsTerminal = false;
+                    break;
+
+                case Classifications.Expression:
+                    IsSpecific = true;
+                    break;
+
+                default:
+                    IsSpecific = false;
+                    break;
+            }
+
+        }
+
+        public ParserNode(Classifications classification, bool isSpecific)
+            :this(classification)
+        {
+            IsSpecific = isSpecific;
         }
 
     }
@@ -115,7 +142,7 @@ namespace SimpleSharp
             Head = new ParserNode(ParserNode.RootName);
             ParserGenerator = new ParserGenerator();
 
-            ParserGenerator.AddRule(" MathAddSub  ->MathMultDiv     + MathAddSub  | MathMultDiv           - MathAddSub   | MathMultDiv;");
+            ParserGenerator.AddRule("MathAddSub  -> MathMultDiv    + MathAddSub  | MathMultDiv           - MathAddSub   | MathMultDiv;");
             ParserGenerator.AddRule("MathMultDiv -> MathExpLog     * MathMultDiv | MathExpLog            /  MathMultDiv | MathExpLog;");
             ParserGenerator.AddRule("MathExpLog  -> MathExpression ^ MathExpLog  | MathExpression[base] log MathExpLog  | MathExpression;");
             ParserGenerator.AddRule("MathExpression -> (MathAddSub) | Identifier | AddSub Identifier | Number | AddSub Number;");

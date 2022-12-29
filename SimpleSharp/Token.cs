@@ -24,6 +24,8 @@ namespace SimpleSharp
         Number,
         Identifier,
         Invalid,
+        Head,
+        Expression,
     };
 
     [DebuggerDisplay("{Lexeme} : {Classification}")]
@@ -50,6 +52,21 @@ namespace SimpleSharp
 
                 default:
                     return false;
+            }
+        }
+
+        public static bool IsTerminal(Classifications classification)
+        {
+            switch (classification)
+            {
+                case Classifications.Head:
+                    return false;
+
+                case Classifications.Expression:
+                    return false;
+
+                default:
+                    return true;
             }
         }
 
