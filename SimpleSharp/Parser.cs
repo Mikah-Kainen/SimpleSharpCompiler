@@ -25,99 +25,46 @@ namespace SimpleSharp
     [DebuggerDisplay("{DebugDisplay}")]
     public class ParserNode
     {
-        public const string RootName = "Head";
-
-        //public NonTerminalStates State;
-        //public string State;
-        public Classifications Classification;
         public Token Token;
         public ParserNode[] Children;
-        public bool IsTerminal;
         public bool IsSpecific;
-        public bool ForAST
-        {
-            get
-            {
-                switch (Classification)
-                {
-                    case Classifications.WhiteSpace:
-                        return false;
 
-                    case Classifications.LeftParenthesis:
-                        return false;
-
-                    case Classifications.RightParenthesis:
-                        return false;
-
-                    case Classifications.BlockComment:
-                        return false;
-
-                    case Classifications.PreciseComment:
-                        return false;
-
-                    default:
-                        return true;
-                }
-            }
-        }
+        public bool ShouldBeInAST => Token.ShouldBeInAST(Token.Classification);
+        public bool IsTerminal => Token.IsTerminal(Token.Classification);
+        public bool IsIgnorable => Token.IsIgnorable(Token.Classification);
 
         public string DebugDisplay
         {
             get
             {
                 string display;
-                if(IsSpecific)
+                if (Token.Lexeme.ToString() != "")
                 {
-
-                }
-                if (Token != null)
-                {
-                    display = Token.Lexeme.ToString();
+                    if (IsSpecific)
+                    {
+                        display = Token.Lexeme.ToString();
+                    }
+                    else
+                    {
+                        display = Token.Classification.ToString();
+                    }
                 }
                 else
                 {
-                    display = State.ToString();
+                    display = Token.Classification.ToString();
                 }
                 return display;
             }
         }
 
-        //public ParserNode(NonTerminalStates state)
-        //{
-        //    State = state;
-        //    IsTerminal = false;
-        //}
-        //public ParserNode(string state)
-        //{
-        //    State = state;
-        //    IsTerminal = false;
-        //    IsSpecific = true;
-        //}
-
         public ParserNode(Classifications classification)
+            : this(new Token(new ReadOnlyMemory<char>(new char[0]), classification), false)
         {
-            Classification = classification;
-            IsTerminal = true;
-            switch(classification)
-            {
-                case Classifications.Head:
-                    IsTerminal = false;
-                    break;
-
-                case Classifications.Expression:
-                    IsSpecific = true;
-                    break;
-
-                default:
-                    IsSpecific = false;
-                    break;
-            }
-
         }
 
-        public ParserNode(Classifications classification, bool isSpecific)
-            :this(classification)
+        public ParserNode(Token token, bool isSpecific)
         {
+            Token = token;
             IsSpecific = isSpecific;
         }
 
@@ -139,7 +86,7 @@ namespace SimpleSharp
         public Parser(Token[] tokens)
         {
             Tokens = tokens;
-            Head = new ParserNode(ParserNode.RootName);
+            Head = new ParserNode(Classifications.Root);
             ParserGenerator = new ParserGenerator();
 
             ParserGenerator.AddRule("MathAddSub  -> MathMultDiv    + MathAddSub  | MathMultDiv           - MathAddSub   | MathMultDiv;");
@@ -198,8 +145,8 @@ namespace SimpleSharp
 
         private ParserNode ParseLine(List<Token> targetLine)
         {
-            Head.Children = new ParserNode[1] { new ParserNode("MathAddSub") };
-            List<Token> result = ParseMathEquation(targetLine, Head.Children[0], true);
+            Head.Children = new ParserNode[1] { new ParserNode(new Token(new ReadOnlyMemory<char>("MathAddSub".ToCharArray()), Classifications.Expression), true) };
+            List<Token> result = ParseEquation(targetLine, Head.Children[0], true);
             if (result != null)
             {
                 return Head;
@@ -212,7 +159,8 @@ namespace SimpleSharp
             return null;
         }
 
-        private List<Token> ParseMathEquation(List<Token> targetEquation, ParserNode current, bool isEnd)
+        //Make sure this equation factors in the IsSpecific bool!
+        private List<Token> ParseEquation(List<Token> targetEquation, ParserNode current, bool isEnd)
         {
             if (targetEquation.Count == 0)
             {
@@ -226,20 +174,26 @@ namespace SimpleSharp
 
             if (current.IsTerminal)
             {
-                if (current.Classification == targetEquation[0].Classification)
+                if (!isEnd & targetEquation.Count == 0)
+                {
+                    return null;
+                }
+                bool doTokensMatch = (current.Token.Classification == targetEquation[0].Classification && (!current.IsSpecific || /*these checks in particular killed my code*/current.Token.Lexeme.ToString() == targetEquation[0].Lexeme.ToString()));
+                //This broke my code
+                int error
+                if (doTokensMatch)
                 {
                     current.Token = targetEquation[0];
                     targetEquation.RemoveAt(0);
-                    if (!isEnd & targetEquation.Count == 0)
-                    {
-                        return null;
-                    }
                     return targetEquation;
                 }
-                return null;
+                else
+                {
+                    return null;
+                }
             }
 
-            var childrenFunctions = MakeChildrenFunctions[current.State];
+            var childrenFunctions = MakeChildrenFunctions[current.Token.Lexeme.ToString()];
             foreach (var func in childrenFunctions)
             {
                 current.Children = func();
@@ -247,7 +201,7 @@ namespace SimpleSharp
                 for (int i = 0; i < current.Children.Length; i++)
                 {
                     bool isTheEnd = i == current.Children.Length - 1;
-                    copyEquation = ParseMathEquation(copyEquation, current.Children[i], isTheEnd & isEnd);
+                    copyEquation = ParseEquation(copyEquation, current.Children[i], isTheEnd & isEnd);
                     if (copyEquation == null)
                     {
                         break;

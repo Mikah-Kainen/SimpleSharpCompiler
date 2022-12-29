@@ -24,7 +24,7 @@ namespace SimpleSharp
         Number,
         Identifier,
         Invalid,
-        Head,
+        Root,
         Expression,
     };
 
@@ -36,6 +36,46 @@ namespace SimpleSharp
 
         public static int ClassificationStartIndex = (int)Classifications.WhiteSpace;
         public static int ClassificationEndIndex = (int)Classifications.Invalid;
+
+
+        public static bool ShouldBeInAST(Classifications classification)
+        {
+            switch (classification)
+            {
+                case Classifications.WhiteSpace:
+                    return false;
+
+                case Classifications.LeftParenthesis:
+                    return false;
+
+                case Classifications.RightParenthesis:
+                    return false;
+
+                case Classifications.BlockComment:
+                    return false;
+
+                case Classifications.PreciseComment:
+                    return false;
+
+                default:
+                    return true;
+            }
+        }
+
+        public static bool IsTerminal(Classifications classification)
+        {
+            switch (classification)
+            {
+                case Classifications.Root:
+                    return false;
+
+                case Classifications.Expression:
+                    return false;
+
+                default:
+                    return true;
+            }
+        }
 
         public static bool IsIgnorable(Classifications classification)
         {
@@ -55,20 +95,6 @@ namespace SimpleSharp
             }
         }
 
-        public static bool IsTerminal(Classifications classification)
-        {
-            switch (classification)
-            {
-                case Classifications.Head:
-                    return false;
-
-                case Classifications.Expression:
-                    return false;
-
-                default:
-                    return true;
-            }
-        }
 
         public Token(ReadOnlyMemory<char> lexeme, Classifications classification)
         {

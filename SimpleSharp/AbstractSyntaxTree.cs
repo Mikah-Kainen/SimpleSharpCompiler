@@ -22,7 +22,7 @@ namespace SimpleSharp
         public ParserNode BuildAST()
         {
             //ParserNode AbstractSyntaxTree = new ParserNode(NonTerminalStates.Head);
-            ParserNode AbstractSyntaxTree = new ParserNode(ParserNode.RootName);
+            ParserNode AbstractSyntaxTree = new ParserNode(Classifications.Root);
             if (ConcreteSyntaxTree.Children == null)
             {
                 return AbstractSyntaxTree;
@@ -41,7 +41,7 @@ namespace SimpleSharp
         {
             if (currentNode.Children == null || currentNode.Children.Length == 0)
             {
-                if (currentNode.ForAST)
+                if (currentNode.ShouldBeInAST)
                 {
                     return currentNode;
                 }
@@ -86,7 +86,7 @@ namespace SimpleSharp
                 List<ParserNode> currentNewGrandChildren = new List<ParserNode>();
                 foreach (ParserNode child in childrenGroup)
                 {
-                    if (child.IsTerminal & child.ForAST)
+                    if (child.IsTerminal & child.ShouldBeInAST)
                     {
                         if (!wasTerminalFound)
                         {
@@ -119,14 +119,14 @@ namespace SimpleSharp
             }
             currentNode.Children = currentNodeChildren.ToArray();
 
-            if (currentNode.IsTerminal & currentNode.ForAST)
+            if (currentNode.IsTerminal & currentNode.ShouldBeInAST)
             {
                 return currentNode;
             }
             else
             {
                 //ParserNode returnNode = new ParserNode(NonTerminalStates.Head);
-                ParserNode returnNode = new ParserNode(ParserNode.RootName);
+                ParserNode returnNode = new ParserNode(Classifications.Root);
                 returnNode.Children = currentNodeChildren.ToArray();
                 return returnNode;
             }
@@ -136,7 +136,7 @@ namespace SimpleSharp
         {
             foreach (ParserNode child in currentNodes)
             {
-                if (child.IsTerminal & child.ForAST)
+                if (child.IsTerminal & child.ShouldBeInAST)
                 {
                     return true;
                 }

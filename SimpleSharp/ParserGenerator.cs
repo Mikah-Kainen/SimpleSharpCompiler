@@ -22,7 +22,7 @@ namespace SimpleSharp
             List<List<Token>> ruleBreakDown = TokenizeRule(rule);
             List<Func<ParserNode[]>> currentFuncs = new List<Func<ParserNode[]>>();
 
-            for(int i = 1; i < ruleBreakDown.Count; i ++)
+            for (int i = 1; i < ruleBreakDown.Count; i++)
             {
                 int ii = i;
                 currentFuncs.Add(() => CreateChildren(ruleBreakDown[ii]));
@@ -34,16 +34,16 @@ namespace SimpleSharp
         public ParserNode[] CreateChildren(List<Token> childrenTokens)
         {
             List<ParserNode> children = new List<ParserNode>();
-            for(int i = 0; i < childrenTokens.Count; i ++)
+            for (int i = 0; i < childrenTokens.Count; i++)
             {
                 bool realToken = true;
                 bool isSpecific = true;
                 if (childrenTokens[i].Classification == Classifications.Identifier)
                 {
                     realToken = false;
-                    for(Classifications classification = (Classifications)Token.ClassificationStartIndex; (int)classification < Token.ClassificationEndIndex; classification ++)
+                    for (Classifications classification = (Classifications)Token.ClassificationStartIndex; (int)classification < Token.ClassificationEndIndex; classification++)
                     {
-                        if(classification.ToString() == childrenTokens[i].Lexeme.ToString())
+                        if (classification.ToString() == childrenTokens[i].Lexeme.ToString())
                         {
                             childrenTokens[i].Classification = classification;
                             realToken = true;
@@ -51,19 +51,13 @@ namespace SimpleSharp
                         }
                     }
                 }
-                if(realToken)
+                if (!realToken)
                 {
-                    ParserNode newNode = new ParserNode(childrenTokens[i].Classification);
-                    if(isSpecific)
-                    {
-                        newNode.Token.Lexeme = childrenTokens[i].Lexeme;
-                    }
-                    children.Add(newNode);
+                    childrenTokens[i].Classification = Classifications.Expression;
                 }
-                else
-                {
-                    children.Add(new ParserNode(childrenTokens[i].Lexeme.ToString()));
-                }
+
+                ParserNode newNode = new ParserNode(childrenTokens[i], isSpecific);
+                children.Add(newNode);
             }
             return children.ToArray();
         }

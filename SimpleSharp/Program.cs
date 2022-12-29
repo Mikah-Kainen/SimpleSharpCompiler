@@ -40,7 +40,7 @@ namespace SimpleSharp
             }
             else
             {
-                display = tree.State.ToString();
+                display = tree.Token.Lexeme.ToString();
             }
 
             Console.WriteLine(spaces + display);
