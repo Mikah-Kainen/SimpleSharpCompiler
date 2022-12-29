@@ -53,7 +53,7 @@ namespace SimpleSharp
                 {
                     display = Token.Classification.ToString();
                 }
-                return display;
+                return display + $" IsSpecific:{IsSpecific}";
             }
         }
 
@@ -76,7 +76,7 @@ namespace SimpleSharp
         public ParserNode Head;
         public ParserGenerator ParserGenerator;
         //public Dictionary<NonTerminalStates, List<Func<ParserNode[]>>> MakeChildrenFunctions;
-        public Dictionary<string, List<Func<ParserNode[]>>> MakeChildrenFunctions => ParserGenerator.MakeChildrenFunctions;
+        public Dictionary<string, List<Func<ParserNode[]>>> GetChildrenTemplates => ParserGenerator.GetChildrenFunctions;
 
         //MathAddSub  -> MathMultDiv    + MathAddSub  | MathMultDiv           -  MathAddSub  | MathMultDiv
         //MathMultDiv -> MathExpLog     * MathMultDiv | MathExpLog            /  MathMultDiv | MathExpLog
@@ -89,10 +89,18 @@ namespace SimpleSharp
             Head = new ParserNode(Classifications.Root);
             ParserGenerator = new ParserGenerator();
 
-            ParserGenerator.AddRule("MathAddSub  -> MathMultDiv    + MathAddSub  | MathMultDiv           - MathAddSub   | MathMultDiv;");
-            ParserGenerator.AddRule("MathMultDiv -> MathExpLog     * MathMultDiv | MathExpLog            /  MathMultDiv | MathExpLog;");
-            ParserGenerator.AddRule("MathExpLog  -> MathExpression ^ MathExpLog  | MathExpression[base] log MathExpLog  | MathExpression;");
-            ParserGenerator.AddRule("MathExpression -> (MathAddSub) | Identifier | AddSub Identifier | Number | AddSub Number;");
+            string stage1 = "MathAddSub";
+            string stage2 = "MathMultDiv";
+            string stage3 = "MathExpLog";
+            string stage4 = "MathExpression";
+            //ParserGenerator.AddRule($"{stage1} -> {stage2} + {stage1} | {stage2}  -  {stage1} | {stage2};");
+            //ParserGenerator.AddRule($"{stage2} -> {stage3} * {stage2} | {stage3}  /  {stage2} | {stage3};");
+            //ParserGenerator.AddRule($"{stage3} -> {stage4} ^ {stage3} | {stage4} log {stage3} | {stage4};");
+            ParserGenerator.AddRule($"{stage1} -> {stage2} {Classifications.AddSub.ToString()}  {stage1} | {stage2};");
+            ParserGenerator.AddRule($"{stage2} -> {stage3} {Classifications.MultDiv.ToString()} {stage2} | {stage3};");
+            ParserGenerator.AddRule($"{stage3} -> {stage4} {Classifications.ExpLog.ToString()}  {stage3} | {stage4};");
+            ParserGenerator.AddRule($"{stage4} -> ({stage1}) | {Classifications.Identifier.ToString()} | {Classifications.AddSub.ToString()} {Classifications.Identifier.ToString()} | {Classifications.Number.ToString()} | {Classifications.AddSub.ToString()} {Classifications.Number.ToString()};");
+            #region old
             //Head = new ParserNode(NonTerminalStates.Head);
             //MakeChildrenFunctions = new Dictionary<NonTerminalStates, List<Func<ParserNode[]>>>();
 
@@ -118,6 +126,7 @@ namespace SimpleSharp
             //mathExpression.Add(() => new ParserNode[] { new ParserNode(Classifications.Number) });
             //mathExpression.Add(() => new ParserNode[] { new ParserNode(Classifications.AddSub), new ParserNode(Classifications.Number) });
             //MakeChildrenFunctions.Add(NonTerminalStates.MathExpression, mathExpression);
+            #endregion
         }
 
         public ParserNode Parse()
@@ -128,7 +137,12 @@ namespace SimpleSharp
             {
                 if (Tokens[i].Classification == Classifications.CodeSeparator)
                 {
-                    parsedLines.Add(ParseLine(currentLine));
+                    ParserNode newParse = ParseLine(currentLine);
+                    if(newParse == null)
+                    {
+                        throw new Exception("Failed Parse");
+                    }
+                    parsedLines.Add(newParse);
                     currentLine = new List<Token>();
                 }
                 else
@@ -160,6 +174,8 @@ namespace SimpleSharp
         }
 
         //Make sure this equation factors in the IsSpecific bool!
+        public List<(Classifications, Classifications)> correctMatches = new List<(Classifications, Classifications)>();
+        public List<(Classifications, Classifications)> incorrectMatches = new List<(Classifications, Classifications)>();
         private List<Token> ParseEquation(List<Token> targetEquation, ParserNode current, bool isEnd)
         {
             if (targetEquation.Count == 0)
@@ -168,7 +184,6 @@ namespace SimpleSharp
                 {
                     return targetEquation;
                 }
-                throw new Exception("Improper Parse");
                 return null;
             }
 
@@ -180,23 +195,28 @@ namespace SimpleSharp
                 }
                 bool doTokensMatch = (current.Token.Classification == targetEquation[0].Classification && (!current.IsSpecific || /*these checks in particular killed my code*/current.Token.Lexeme.ToString() == targetEquation[0].Lexeme.ToString()));
                 //This broke my code
-                int error
+                int error;
                 if (doTokensMatch)
                 {
+                    correctMatches.Add((current.Token.Classification, targetEquation[0].Classification));
                     current.Token = targetEquation[0];
                     targetEquation.RemoveAt(0);
                     return targetEquation;
                 }
                 else
                 {
+                    if(current.Token.Classification == targetEquation[0].Classification)
+                    {
+                        incorrectMatches.Add((current.Token.Classification, targetEquation[0].Classification));
+                    }
                     return null;
                 }
             }
 
-            var childrenFunctions = MakeChildrenFunctions[current.Token.Lexeme.ToString()];
-            foreach (var func in childrenFunctions)
+            var childrenFunctions = GetChildrenTemplates[current.Token.Lexeme.ToString()];
+            for(int functionIndex = 0; functionIndex < childrenFunctions.Count; functionIndex ++)
             {
-                current.Children = func();
+                current.Children = childrenFunctions[functionIndex]();
                 List<Token> copyEquation = new List<Token>(targetEquation);
                 for (int i = 0; i < current.Children.Length; i++)
                 {
@@ -204,6 +224,10 @@ namespace SimpleSharp
                     copyEquation = ParseEquation(copyEquation, current.Children[i], isTheEnd & isEnd);
                     if (copyEquation == null)
                     {
+                        if(functionIndex == childrenFunctions.Count - 1)
+                        {
+
+                        }
                         break;
                     }
                 }

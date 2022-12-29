@@ -10,11 +10,11 @@ namespace SimpleSharp
 {
     public class ParserGenerator
     {
-        public Dictionary<string, List<Func<ParserNode[]>>> MakeChildrenFunctions;
+        public Dictionary<string, List<Func<ParserNode[]>>> GetChildrenFunctions;
 
         public ParserGenerator()
         {
-            MakeChildrenFunctions = new Dictionary<string, List<Func<ParserNode[]>>>();
+            GetChildrenFunctions = new Dictionary<string, List<Func<ParserNode[]>>>();
         }
 
         public bool AddRule(string rule)
@@ -25,19 +25,31 @@ namespace SimpleSharp
             for (int i = 1; i < ruleBreakDown.Count; i++)
             {
                 int ii = i;
-                currentFuncs.Add(() => CreateChildren(ruleBreakDown[ii]));
+                ParserNode[] templates = CreateChildrenTemplates(ruleBreakDown[ii]);
+                currentFuncs.Add(() => CopyNodes(templates));
             }
-            MakeChildrenFunctions.Add(ruleBreakDown[0][0].Lexeme.ToString(), currentFuncs);
+            GetChildrenFunctions.Add(ruleBreakDown[0][0].Lexeme.ToString(), currentFuncs);
             return true;
         }
 
-        public ParserNode[] CreateChildren(List<Token> childrenTokens)
+        private ParserNode[] CopyNodes(ParserNode[] targetNodes)
+        {
+            ParserNode[] returnNodes = new ParserNode[targetNodes.Length];
+            for(int i = 0; i < targetNodes.Length; i ++)
+            {
+                returnNodes[i] = new ParserNode(new Token(targetNodes[i].Token.Lexeme, targetNodes[i].Token.Classification), targetNodes[i].IsSpecific);
+            }
+            return returnNodes;
+        }
+
+        private ParserNode[] CreateChildrenTemplates(List<Token> childrenTokens)
         {
             List<ParserNode> children = new List<ParserNode>();
             for (int i = 0; i < childrenTokens.Count; i++)
             {
                 bool realToken = true;
                 bool isSpecific = true;
+
                 if (childrenTokens[i].Classification == Classifications.Identifier)
                 {
                     realToken = false;
