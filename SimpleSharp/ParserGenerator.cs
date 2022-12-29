@@ -37,6 +37,7 @@ namespace SimpleSharp
             for(int i = 0; i < childrenTokens.Count; i ++)
             {
                 bool realToken = true;
+                bool isSpecific = true;
                 if (childrenTokens[i].Classification == Classifications.Identifier)
                 {
                     realToken = false;
@@ -46,12 +47,18 @@ namespace SimpleSharp
                         {
                             childrenTokens[i].Classification = classification;
                             realToken = true;
+                            isSpecific = false;
                         }
                     }
                 }
                 if(realToken)
                 {
-                    children.Add(new ParserNode(childrenTokens[i].Classification));
+                    ParserNode newNode = new ParserNode(childrenTokens[i].Classification);
+                    if(isSpecific)
+                    {
+                        newNode.Token.Lexeme = childrenTokens[i].Lexeme;
+                    }
+                    children.Add(newNode);
                 }
                 else
                 {
