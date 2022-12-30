@@ -15,21 +15,26 @@ namespace SimpleSharp
     {
         public static string[] RegexStrings =
         {
-            /*[(int)Classifications.WhiteSpace] =       */@"(\s+)",
-            /*[(int)Classifications.BlockComment] =     */@"(\/\/.*?)\n",
-            /*[(int)Classifications.PreciseComment] =   */@"(\/\*.*?\*\/)",//maybe include /s at the end
-            /*[(int)Classifications.Keyword] =          */@"(for|each|foreach|if)\b",
-            /*[(int)Classifications.AddSub] =           */@"([-+])",
-            /*[(int)Classifications.MultDiv] =          */@"([*\/])",
-            /*[(int)Classifications.ExpLog] =           */@"((\^|\blog\b))",
-            /*[(int)Classifications.LeftParenthesis] =  */@"([(])",
-            /*[(int)Classifications.RightParenthesis] = */@"([)])",
-            /*[(int)Classifications.CodeSeparator] =    */@"(;)",
-            /*[(int)Classifications.Declare] =          */@"\b(declare)",
-            /*[(int)Classifications.Type] =             */@"(int|string|char)\b",
-            /*[(int)Classifications.Number] =           */@"(-??\d+)",
-            /*[(int)Classifications.Identifier] =       */@"(\w+)\b",
-            /*[(int)Classifications.Invalid] =          */@"(.+?)\b",
+            /*[(int)Classifications.WhiteSpace] =         */@"(\s+)",
+            /*[(int)Classifications.BlockComment] =       */@"(\/\/.*?)\n",
+            /*[(int)Classifications.PreciseComment] =     */@"(\/\*.*?\*\/)",//maybe include /s at the end
+            /*[(int)Classifications.Keyword] =            */@"(for|each|foreach|if|end)\b",
+            /*[(int)Classifications.Comparison] =         */@"(>|<|==)",
+            /*[(int)Classifications.Equals] =             */@"(=)",
+            /*[(int)Classifications.AddSub] =             */@"([-+])",
+            /*[(int)Classifications.MultDiv] =            */@"([*\/])",
+            /*[(int)Classifications.ExpLog] =             */@"((\^|\blog\b))",
+            /*[(int)Classifications.LeftParenthesis] =    */@"([(])",
+            /*[(int)Classifications.RightParenthesis] =   */@"([)])",
+            /*[(int)Classifications.LeftCurlyBrackets] =  */@"({)",
+            /*[(int)Classifications.RightCurlyBrackets] = */@"(})",
+            /*[(int)Classifications.QuotationMarks] =     */"(\")",
+            /*[(int)Classifications.CodeSeparator] =      */@"(;)",
+            /*[(int)Classifications.Declare] =            */@"\b(declare)",
+            /*[(int)Classifications.Type] =               */@"(int|string|char)\b",
+            /*[(int)Classifications.Number] =             */@"(-??\d+)",
+            /*[(int)Classifications.Identifier] =         */@"(\w+)\b",
+            /*[(int)Classifications.Invalid] =            */@"(.+?)\b",
         };
 
         //Cool Websites:

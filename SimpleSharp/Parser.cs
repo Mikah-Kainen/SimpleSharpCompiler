@@ -57,6 +57,8 @@ namespace SimpleSharp
             }
         }
 
+        public static ParserNode CreateRootNode() => new ParserNode(new Token(new ReadOnlyMemory<char>(Parser.StartingState.ToCharArray()), Classifications.Root), true);
+
         public ParserNode(Classifications classification)
             : this(new Token(new ReadOnlyMemory<char>(new char[0]), classification), false)
         {
@@ -73,10 +75,10 @@ namespace SimpleSharp
     public class Parser
     {
         public Token[] Tokens;
-        public ParserNode Head;
         public ParserGenerator ParserGenerator;
+        public const string StartingState = "Root";
         //public Dictionary<NonTerminalStates, List<Func<ParserNode[]>>> MakeChildrenFunctions;
-        public Dictionary<string, List<Func<ParserNode[]>>> GetChildrenTemplates => ParserGenerator.GetChildrenFunctions;
+        public Dictionary<string, List<Func<ParserNode[]>>> GetChildrenFunctions => ParserGenerator.GetChildrenFunctions;
 
         //MathAddSub  -> MathMultDiv    + MathAddSub  | MathMultDiv           -  MathAddSub  | MathMultDiv
         //MathMultDiv -> MathExpLog     * MathMultDiv | MathExpLog            /  MathMultDiv | MathExpLog
@@ -86,20 +88,29 @@ namespace SimpleSharp
         public Parser(Token[] tokens)
         {
             Tokens = tokens;
-            Head = new ParserNode(Classifications.Root);
             ParserGenerator = new ParserGenerator();
 
-            string stage1 = "MathAddSub";
-            string stage2 = "MathMultDiv";
-            string stage3 = "MathExpLog";
-            string stage4 = "MathExpression";
-            //ParserGenerator.AddRule($"{stage1} -> {stage2} + {stage1} | {stage2}  -  {stage1} | {stage2};");
-            //ParserGenerator.AddRule($"{stage2} -> {stage3} * {stage2} | {stage3}  /  {stage2} | {stage3};");
-            //ParserGenerator.AddRule($"{stage3} -> {stage4} ^ {stage3} | {stage4} log {stage3} | {stage4};");
-            ParserGenerator.AddRule($"{stage1} -> {stage2} {Classifications.AddSub.ToString()}  {stage1} | {stage2};");
-            ParserGenerator.AddRule($"{stage2} -> {stage3} {Classifications.MultDiv.ToString()} {stage2} | {stage3};");
-            ParserGenerator.AddRule($"{stage3} -> {stage4} {Classifications.ExpLog.ToString()}  {stage3} | {stage4};");
-            ParserGenerator.AddRule($"{stage4} -> ({stage1}) | {Classifications.Identifier.ToString()} | {Classifications.AddSub.ToString()} {Classifications.Identifier.ToString()} | {Classifications.Number.ToString()} | {Classifications.AddSub.ToString()} {Classifications.Number.ToString()};");
+            string allocateInt = "AllocateInt";
+            string addSubStage = "MathAddSub";
+            string multDivStage = "MathMultDiv";
+            string expLogStage = "MathExpLog";
+            string finalValuesStage = "MathExpression";
+
+            ParserGenerator.AddRule($"{allocateInt} -> int {Classifications.Identifier} = {addSubStage};");
+            ParserGenerator.AddRule($"{addSubStage} -> {multDivStage} {Classifications.AddSub.ToString()}  {addSubStage} | {multDivStage};");
+            ParserGenerator.AddRule($"{multDivStage} -> {expLogStage} {Classifications.MultDiv.ToString()} {multDivStage} | {expLogStage};");
+            ParserGenerator.AddRule($"{expLogStage} -> {finalValuesStage} {Classifications.ExpLog.ToString()}  {expLogStage} | {finalValuesStage};");
+            ParserGenerator.AddRule($"{finalValuesStage} -> ({addSubStage}) | {Classifications.Identifier.ToString()} | {Classifications.AddSub.ToString()} {Classifications.Identifier.ToString()} | {Classifications.Number.ToString()} | {Classifications.AddSub.ToString()} {Classifications.Number.ToString()};");
+
+            string ifStatement = "IfStatement";
+            ParserGenerator.AddRule($"{ifStatement} -> if ({Classifications.Identifier}) {Classifications.LeftCurlyBrackets} {StartingState} {Classifications.RightCurlyBrackets};");
+
+            string allocateString = "AllocateString";
+            ParserGenerator.AddRule($"{allocateString} -> string {Classifications.Identifier} = {Classifications.QuotationMark} {Classifications.Identifier} {Classifications.QuotationMark};");
+
+            string middleState = "MiddleState";
+            ParserGenerator.AddRule($"{middleState} -> {allocateInt} | {allocateString} | {ifStatement};");
+            ParserGenerator.AddRule($"{StartingState} -> {middleState} {Classifications.CodeSeparator.ToString()} {StartingState} | {middleState} {Classifications.CodeSeparator.ToString()};");
             #region old
             //Head = new ParserNode(NonTerminalStates.Head);
             //MakeChildrenFunctions = new Dictionary<NonTerminalStates, List<Func<ParserNode[]>>>();
@@ -131,112 +142,60 @@ namespace SimpleSharp
 
         public ParserNode Parse()
         {
-            List<Token> currentLine = new List<Token>();
-            List<ParserNode> parsedLines = new List<ParserNode>();
-            for (int i = 0; i < Tokens.Length; i++)
+            List<Token> usefulTokens = new List<Token>();
+            for(int i = 0; i < Tokens.Length; i ++)
             {
-                if (Tokens[i].Classification == Classifications.CodeSeparator)
+                if (!Token.IsIgnorable(Tokens[i].Classification))
                 {
-                    ParserNode newParse = ParseLine(currentLine);
-                    if(newParse == null)
-                    {
-                        throw new Exception("Failed Parse");
-                    }
-                    parsedLines.Add(newParse);
-                    currentLine = new List<Token>();
-                }
-                else
-                {
-                    if (!Token.IsIgnorable(Tokens[i].Classification))
-                    {
-                        currentLine.Add(Tokens[i]);
-                    }
+                    usefulTokens.Add(Tokens[i]);
                 }
             }
-
-            return Head;
+            ParserNode returnValue = ParserNode.CreateRootNode();
+            var shouldNotBeNull = Parse(usefulTokens, returnValue);
+            if(shouldNotBeNull == null)
+            {
+                throw new Exception("This should not be null");
+            }
+            return returnValue;
         }
 
-        private ParserNode ParseLine(List<Token> targetLine)
-        {
-            Head.Children = new ParserNode[1] { new ParserNode(new Token(new ReadOnlyMemory<char>("MathAddSub".ToCharArray()), Classifications.Expression), true) };
-            List<Token> result = ParseEquation(targetLine, Head.Children[0], true);
-            if (result != null)
-            {
-                return Head;
-            }
-            else
-            {
-                throw new Exception("Failed Parse");
-            }
-
-            return null;
-        }
-
-        //Make sure this equation factors in the IsSpecific bool!
-        public List<(Classifications, Classifications)> correctMatches = new List<(Classifications, Classifications)>();
-        public List<(Classifications, Classifications)> incorrectMatches = new List<(Classifications, Classifications)>();
-        private List<Token> ParseEquation(List<Token> targetEquation, ParserNode current, bool isEnd)
+        private List<Token> Parse(List<Token> targetEquation, ParserNode current)
         {
             if (targetEquation.Count == 0)
             {
-                if (isEnd)
-                {
-                    return targetEquation;
-                }
-                return null;
+                return targetEquation;
             }
 
             if (current.IsTerminal)
             {
-                if (!isEnd & targetEquation.Count == 0)
-                {
-                    return null;
-                }
-                bool doTokensMatch = (current.Token.Classification == targetEquation[0].Classification && (!current.IsSpecific || /*these checks in particular killed my code*/current.Token.Lexeme.ToString() == targetEquation[0].Lexeme.ToString()));
-                //This broke my code
-                int error;
+                bool doTokensMatch = (current.Token.Classification == targetEquation[0].Classification && (!current.IsSpecific || current.Token.Lexeme.ToString() == targetEquation[0].Lexeme.ToString()));
                 if (doTokensMatch)
                 {
-                    correctMatches.Add((current.Token.Classification, targetEquation[0].Classification));
                     current.Token = targetEquation[0];
                     targetEquation.RemoveAt(0);
                     return targetEquation;
                 }
                 else
                 {
-                    if(current.Token.Classification == targetEquation[0].Classification)
-                    {
-                        incorrectMatches.Add((current.Token.Classification, targetEquation[0].Classification));
-                    }
                     return null;
                 }
             }
 
-            var childrenFunctions = GetChildrenTemplates[current.Token.Lexeme.ToString()];
-            for(int functionIndex = 0; functionIndex < childrenFunctions.Count; functionIndex ++)
+            var childrenFunctions = GetChildrenFunctions[current.Token.Lexeme.ToString()];
+            for (int functionIndex = 0; functionIndex < childrenFunctions.Count; functionIndex++)
             {
                 current.Children = childrenFunctions[functionIndex]();
                 List<Token> copyEquation = new List<Token>(targetEquation);
                 for (int i = 0; i < current.Children.Length; i++)
                 {
-                    bool isTheEnd = i == current.Children.Length - 1;
-                    copyEquation = ParseEquation(copyEquation, current.Children[i], isTheEnd & isEnd);
+                    copyEquation = Parse(copyEquation, current.Children[i]);
                     if (copyEquation == null)
                     {
-                        if(functionIndex == childrenFunctions.Count - 1)
-                        {
-
-                        }
                         break;
                     }
                 }
                 if (copyEquation != null)
                 {
-                    if (isEnd & copyEquation.Count != 0)
-                    {
-                        throw new Exception("FAIL");
-                    }
                     return copyEquation;
                 }
             }

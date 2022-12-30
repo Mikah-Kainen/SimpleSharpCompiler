@@ -15,9 +15,11 @@ namespace SimpleSharp
 
             string errorCode = "1 - 1;";
 
-            string basicCode = "1 + 1;";
+            string basicCode = "int x = 1;";
 
-            Lexer lexer = new Lexer(coolCode);
+            string code = File.ReadAllText("C:\\Users\\mikah.kainen\\Source\\Repos\\Mikah-Kainen\\SimpleSharpCompiler\\SimpleSharp\\ProgramFile.txt");
+
+            Lexer lexer = new Lexer(code);
             var tokenList = lexer.Tokenize();
 
             Parser parser = new Parser(tokenList);
@@ -52,7 +54,10 @@ namespace SimpleSharp
             }
             foreach (ParserNode child in tree.Children)
             {
-                DisplayTree(child, spaces + "| ");
+                if (child != null)
+                {
+                    DisplayTree(child, spaces + "| ");
+                }
             }
         }
 

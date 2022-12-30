@@ -1,0 +1,8 @@
+﻿if ( x ) {
+int x = 1;
+string y = "banana";
+if(y)
+{
+int y = 1;
+};
+};

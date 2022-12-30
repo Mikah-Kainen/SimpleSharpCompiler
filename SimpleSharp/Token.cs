@@ -13,11 +13,16 @@ namespace SimpleSharp
         BlockComment,
         PreciseComment,
         Keyword,
+        Comparison,
+        Equals,
         AddSub,
         MultDiv,
         ExpLog,
         LeftParenthesis,
         RightParenthesis,
+        LeftCurlyBrackets,
+        RightCurlyBrackets,
+        QuotationMark,
         CodeSeparator,
         Declare,
         Type,
@@ -55,6 +60,24 @@ namespace SimpleSharp
                     return false;
 
                 case Classifications.PreciseComment:
+                    return false;
+
+                case Classifications.LeftCurlyBrackets:
+                    return false;
+
+                case Classifications.RightCurlyBrackets:
+                    return false;
+
+                case Classifications.CodeSeparator:
+                    return false;
+
+                case Classifications.Root:
+                    return false;
+
+                case Classifications.Expression:
+                    return false;
+
+                case Classifications.QuotationMark:
                     return false;
 
                 default:

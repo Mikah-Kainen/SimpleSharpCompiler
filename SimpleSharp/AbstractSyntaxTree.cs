@@ -21,19 +21,15 @@ namespace SimpleSharp
 
         public ParserNode BuildAST()
         {
-            //ParserNode AbstractSyntaxTree = new ParserNode(NonTerminalStates.Head);
-            ParserNode AbstractSyntaxTree = new ParserNode(Classifications.Root);
+            ParserNode AbstractSyntaxTree = ParserNode.CreateRootNode();
             if (ConcreteSyntaxTree.Children == null)
             {
                 return AbstractSyntaxTree;
             }
 
             AbstractSyntaxTree.Children = new ParserNode[ConcreteSyntaxTree.Children.Length];
-            for (int i = 0; i < ConcreteSyntaxTree.Children.Length; i++)
-            {
-                AbstractSyntaxTree.Children[i] = BuildAST(ConcreteSyntaxTree.Children[i]);
-            }
 
+            AbstractSyntaxTree = BuildAST(ConcreteSyntaxTree);
             return AbstractSyntaxTree;
         }
 
@@ -86,6 +82,10 @@ namespace SimpleSharp
                 List<ParserNode> currentNewGrandChildren = new List<ParserNode>();
                 foreach (ParserNode child in childrenGroup)
                 {
+                    if(child == null)
+                    {
+
+                    }    
                     if (child.IsTerminal & child.ShouldBeInAST)
                     {
                         if (!wasTerminalFound)
@@ -125,6 +125,7 @@ namespace SimpleSharp
             }
             else
             {
+                
                 //ParserNode returnNode = new ParserNode(NonTerminalStates.Head);
                 ParserNode returnNode = new ParserNode(Classifications.Root);
                 returnNode.Children = currentNodeChildren.ToArray();
