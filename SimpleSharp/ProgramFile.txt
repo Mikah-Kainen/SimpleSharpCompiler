@@ -1,4 +1,5 @@
-﻿if ( x ) {
+﻿bool true = x > 5;
+if ( true ) {
 int x = 1;
 string y = "banana";
 if(y)

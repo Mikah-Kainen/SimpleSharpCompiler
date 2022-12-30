@@ -18,6 +18,7 @@ namespace SimpleSharp
             string basicCode = "int x = 1;";
 
             string code = File.ReadAllText("C:\\Users\\mikah.kainen\\Source\\Repos\\Mikah-Kainen\\SimpleSharpCompiler\\SimpleSharp\\ProgramFile.txt");
+            //string code = File.ReadAllText("C:\\Users\\mikah\\Source\\Repos\\Mikah-Kainen\\SimpleSharpCompiler\\SimpleSharp\\ProgramFile.txt");
 
             Lexer lexer = new Lexer(code);
             var tokenList = lexer.Tokenize();

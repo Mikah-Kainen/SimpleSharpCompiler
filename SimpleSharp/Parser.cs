@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.Dynamic;
+using System.Formats.Asn1;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -90,6 +91,9 @@ namespace SimpleSharp
             Tokens = tokens;
             ParserGenerator = new ParserGenerator();
 
+            string numberOrIdentifier = "NumberOrIdentifier";
+            ParserGenerator.AddRule($"{numberOrIdentifier} -> {Classifications.Identifier.ToString()} | {Classifications.AddSub.ToString()} {Classifications.Identifier.ToString()} | {Classifications.Number.ToString()} | {Classifications.AddSub.ToString()} {Classifications.Number.ToString()};");
+
             string allocateInt = "AllocateInt";
             string addSubStage = "MathAddSub";
             string multDivStage = "MathMultDiv";
@@ -100,16 +104,25 @@ namespace SimpleSharp
             ParserGenerator.AddRule($"{addSubStage} -> {multDivStage} {Classifications.AddSub.ToString()}  {addSubStage} | {multDivStage};");
             ParserGenerator.AddRule($"{multDivStage} -> {expLogStage} {Classifications.MultDiv.ToString()} {multDivStage} | {expLogStage};");
             ParserGenerator.AddRule($"{expLogStage} -> {finalValuesStage} {Classifications.ExpLog.ToString()}  {expLogStage} | {finalValuesStage};");
-            ParserGenerator.AddRule($"{finalValuesStage} -> ({addSubStage}) | {Classifications.Identifier.ToString()} | {Classifications.AddSub.ToString()} {Classifications.Identifier.ToString()} | {Classifications.Number.ToString()} | {Classifications.AddSub.ToString()} {Classifications.Number.ToString()};");
+            ParserGenerator.AddRule($"{finalValuesStage} -> ({addSubStage}) | {numberOrIdentifier};");
+
+            string comparisonExpression = "ComparisonExpression";
+            ParserGenerator.AddRule($"{comparisonExpression} -> {numberOrIdentifier} {Classifications.Comparison} {numberOrIdentifier};");
+
+            string conditional = "Conditional";
+            ParserGenerator.AddRule($"{conditional} -> {comparisonExpression} | {Classifications.Identifier};");
 
             string ifStatement = "IfStatement";
-            ParserGenerator.AddRule($"{ifStatement} -> if ({Classifications.Identifier}) {Classifications.LeftCurlyBrackets} {StartingState} {Classifications.RightCurlyBrackets};");
+            ParserGenerator.AddRule($"{ifStatement} -> if ({conditional}) {Classifications.LeftCurlyBrackets} {StartingState} {Classifications.RightCurlyBrackets};");
+
+            string allocateBool = "AllocateBool";
+            ParserGenerator.AddRule($"{allocateBool} -> bool {Classifications.Identifier} = {conditional};");
 
             string allocateString = "AllocateString";
             ParserGenerator.AddRule($"{allocateString} -> string {Classifications.Identifier} = {Classifications.QuotationMark} {Classifications.Identifier} {Classifications.QuotationMark};");
 
             string middleState = "MiddleState";
-            ParserGenerator.AddRule($"{middleState} -> {allocateInt} | {allocateString} | {ifStatement};");
+            ParserGenerator.AddRule($"{middleState} -> {allocateInt} | {allocateBool} | {allocateString} | {ifStatement};");
             ParserGenerator.AddRule($"{StartingState} -> {middleState} {Classifications.CodeSeparator.ToString()} {StartingState} | {middleState} {Classifications.CodeSeparator.ToString()};");
             #region old
             //Head = new ParserNode(NonTerminalStates.Head);

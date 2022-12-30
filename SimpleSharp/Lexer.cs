@@ -31,7 +31,7 @@ namespace SimpleSharp
             /*[(int)Classifications.QuotationMarks] =     */"(\")",
             /*[(int)Classifications.CodeSeparator] =      */@"(;)",
             /*[(int)Classifications.Declare] =            */@"\b(declare)",
-            /*[(int)Classifications.Type] =               */@"(int|string|char)\b",
+            /*[(int)Classifications.Type] =               */@"(int|string|char|bool)\b",
             /*[(int)Classifications.Number] =             */@"(-??\d+)",
             /*[(int)Classifications.Identifier] =         */@"(\w+)\b",
             /*[(int)Classifications.Invalid] =            */@"(.+?)\b",
