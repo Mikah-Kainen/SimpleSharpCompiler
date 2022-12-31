@@ -1,5 +1,5 @@
-﻿bool true = x > 5;
-if ( true ) {
+﻿bool hi = x > 5;
+if ( hi ) {
 int x = 1;
 string y = "banana";
 if(y)

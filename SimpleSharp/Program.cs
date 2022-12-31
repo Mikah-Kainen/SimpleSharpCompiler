@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Text.RegularExpressions;
 
 namespace SimpleSharp
@@ -34,6 +35,10 @@ namespace SimpleSharp
 
             DisplayTree(abstractSyntaxTree, "A");
 
+            SemanticAnalyzer analyzer = new SemanticAnalyzer(abstractSyntaxTree);
+
+            CodeGenerator generator = new CodeGenerator();
+            generator.GenerateProgram("Program");
         }
 
         public static void DisplayTree(ParserNode tree, string spaces)

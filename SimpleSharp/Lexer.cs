@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -13,12 +12,13 @@ namespace SimpleSharp
 
     public class Lexer
     {
+        public static string TypeKeywordList = "for|each|foreach|if|end|true|false";
         public static string[] RegexStrings =
         {
             /*[(int)Classifications.WhiteSpace] =         */@"(\s+)",
             /*[(int)Classifications.BlockComment] =       */@"(\/\/.*?)\n",
             /*[(int)Classifications.PreciseComment] =     */@"(\/\*.*?\*\/)",//maybe include /s at the end
-            /*[(int)Classifications.Keyword] =            */@"(for|each|foreach|if|end)\b",
+            /*[(int)Classifications.Keyword] =            */@$"({TypeKeywordList})\b",
             /*[(int)Classifications.Comparison] =         */@"(>|<|==)",
             /*[(int)Classifications.Equals] =             */@"(=)",
             /*[(int)Classifications.AddSub] =             */@"([-+])",
